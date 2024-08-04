@@ -1,139 +1,255 @@
-<?php
-declare(strict_types=1);
-
-$db = new SQLite3('security_guidelines.db');
-
-// Create table if not exists
-$db->exec('CREATE TABLE IF NOT EXISTS guidelines (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    framework TEXT,
-    guideline TEXT
-)');
-
-// Sample data insertion (you would typically do this once, not on every page load)
-$sample_data = [
-    ['CIS (Center for Internet Security)', 'Provides a set of best practices and standards to secure systems and data against cyber threats.', 'https://www.cisecurity.org/controls/'],
-    ['ITIL (Information Technology Infrastructure Library)', 'A framework for IT service management that aims to align IT services with the needs of the business.', 'https://www.axelos.com/best-practice-solutions/itil'],
-    ['OWASP (Open Web Application Security Project)', 'An online community that produces freely available articles, methodologies, documentation, tools, and technologies in the field of web application security.', 'https://owasp.org/'],
-    ['MITRE ATT&CK', 'A globally-accessible knowledge base of adversary tactics and techniques based on real-world observations.', 'https://attack.mitre.org/'],
-    ['NIST (National Institute of Standards and Technology)', 'Develops and promotes cybersecurity standards, guidelines, and best practices to help organizations manage and reduce their cybersecurity risk.', 'https://www.nist.gov/cyberframework'],
-    ['ISO/IEC 27001', 'Specifies the requirements for establishing, implementing, maintaining, and continually improving an information security management system (ISMS).', 'https://www.iso.org/isoiec-27001-information-security.html'],
-    ['COBIT (Control Objectives for Information and Related Technologies)', 'A framework for developing, implementing, monitoring, and improving IT governance and management practices.', 'https://www.isaca.org/resources/cobit'],
-    ['GDPR (General Data Protection Regulation)', 'A legal framework that sets guidelines for the collection and processing of personal information from individuals who live in the European Union (EU).', 'https://gdpr.eu/'],
-    ['HIPAA (Health Insurance Portability and Accountability Act)', 'A US law designed to provide privacy standards to protect patients\' medical records and other health information.', 'https://www.hhs.gov/hipaa/index.html'],
-    ['PCI DSS (Payment Card Industry Data Security Standard)', 'A set of security standards designed to ensure that all companies that accept, process, store, or transmit credit card information maintain a secure environment.', 'https://www.pcisecuritystandards.org/pci_security/']
-];
-
-$insert = $db->prepare('INSERT OR IGNORE INTO guidelines (framework, guideline) VALUES (:framework, :guideline)');
-foreach ($sample_data as $data) {
-    $insert->bindValue(':framework', $data[0], SQLITE3_TEXT);
-    $insert->bindValue(':guideline', $data[1], SQLITE3_TEXT);
-    $insert->execute();
-}
-
-// Fetch guidelines
-$results = $db->query('SELECT * FROM guidelines');
-?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cybersecurity Guidelines - Matthew's Azure Upload</title>
+    <title>Live Cyber Attack Threat Map</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            color: #333;
+        body, html {
             margin: 0;
             padding: 0;
-            background-color: #f3f2f1;
+            height: 100%;
+            font-family: Arial, sans-serif;
+            background-color: #1a1a1a;
+            color: #ffffff;
         }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        header {
-            background-color: #0078d4;
-            color: white;
-            padding: 10px 0;
-        }
-        .header-content {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
-        h1 {
-            margin: 0;
-            font-size: 24px;
-        }
-        .logo {
-            height: 30px;
-            margin-right: 10px;
-        }
-        .guidelines-section {
-            background-color: white;
-            border-radius: 4px;
-            padding: 20px;
-            margin-top: 20px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-        }
-        table {
+        #map {
+            height: 80%;
             width: 100%;
-            border-collapse: collapse;
         }
-        th, td {
+        #stats {
+            height: 20%;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            background-color: #2c3e50;
             padding: 10px;
-            border-bottom: 1px solid #ddd;
-            text-align: left;
         }
-        th {
-            background-color: #f3f2f1;
+        .stat-box {
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 24px;
             font-weight: bold;
-        }
-        .nav-link {
-            color: white;
-            text-decoration: none;
-            margin-left: 20px;
-        }
-        .nav-link:hover {
-            text-decoration: underline;
+            color: #3498db;
         }
     </style>
 </head>
 <body>
-    <header>
-        <div class="header-content">
-            <h1><img src="logo.png" alt="Logo" class="logo">Matthew's Azure Upload</h1>
-            <nav>
-                <a href="index.php" class="nav-link">File Upload</a>
-                <a href="security_guidelines.php" class="nav-link">Security Guidelines</a>
-            </nav>
+    <div id="map"></div>
+    <div id="stats">
+        <div class="stat-box">
+            <div>Total Reports</div>
+            <div id="totalReports" class="stat-value">0</div>
         </div>
-    </header>
-    <div class="container">
-        <div class="guidelines-section">
-            <h2>Cybersecurity Guidelines</h2>
-            <table>
-                <tr>
-                    <th>Framework</th>
-                    <th>Guideline</th>
-                </tr>
-                <?php
-                while ($row = $results->fetchArray()) {
-                    echo "<tr>";
-                    echo "<td>" . htmlspecialchars($row['framework']) . "</td>";
-                    echo "<td>" . htmlspecialchars($row['guideline']) . "</td>";
-                    echo "</tr>";
-                }
-                ?>
-            </table>
+        <div class="stat-box">
+            <div>Top Attacker Country</div>
+            <div id="topAttackerCountry" class="stat-value">-</div>
+        </div>
+        <div class="stat-box">
+            <div>Most Common Category</div>
+            <div id="topCategory" class="stat-value">-</div>
         </div>
     </div>
+
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script>
+        const map = L.map('map').setView([0, 0], 2);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        const API_KEY = '<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Cyber Attack Threat Map</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: Arial, sans-serif;
+            background-color: #1a1a1a;
+            color: #ffffff;
+        }
+        #map {
+            height: 80%;
+            width: 100%;
+        }
+        #stats {
+            height: 20%;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            background-color: #2c3e50;
+            padding: 10px;
+        }
+        .stat-box {
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #3498db;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <div id="stats">
+        <div class="stat-box">
+            <div>Total Reports</div>
+            <div id="totalReports" class="stat-value">0</div>
+        </div>
+        <div class="stat-box">
+            <div>Top Attacker Country</div>
+            <div id="topAttackerCountry" class="stat-value">-</div>
+        </div>
+        <div class="stat-box">
+            <div>Most Common Category</div>
+            <div id="topCategory" class="stat-value">-</div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script>
+        const map = L.map('map').setView([0, 0], 2);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        const API_KEY = 'YOUR_API_KEY_HERE'; // Replace with your actual API key
+        let totalReports = 0;
+        let countryCount = {};
+        let categoryCount = {};
+
+        async function fetchRecentReports() {
+            const url = 'https://api.abuseipdb.com/api/v2/reports?page=1&perPage=100';
+            
+            try {
+                const response = await fetch(url, {
+                    headers: {
+                        'Key': API_KEY,
+                        'Accept': 'application/json'
+                    }
+                });
+                const data = await response.json();
+                
+                data.data.forEach(report => {
+                    addReport(report);
+                });
+
+                updateStats();
+            } catch (error) {
+                console.error('Error fetching data:', error);
+            }
+        }
+
+        function addReport(report) {
+            const lat = report.latitude;
+            const lon = report.longitude;
+            const country = report.countryCode;
+            const category = report.categories[0]; // Using the first category for simplicity
+
+            L.circle([lat, lon], {
+                color: 'red',
+                fillColor: '#f03',
+                fillOpacity: 0.5,
+                radius: 50000
+            }).addTo(map).bindPopup(`
+                IP: ${report.ipAddress}<br>
+                Country: ${country}<br>
+                Category: ${category}<br>
+                Reported At: ${report.reportedAt}
+            `);
+
+            totalReports++;
+            countryCount[country] = (countryCount[country] || 0) + 1;
+            categoryCount[category] = (categoryCount[category] || 0) + 1;
+        }
+
+        function updateStats() {
+            document.getElementById('totalReports').textContent = totalReports;
+            document.getElementById('topAttackerCountry').textContent = getTopItem(countryCount);
+            document.getElementById('topCategory').textContent = getTopItem(categoryCount);
+        }
+
+        function getTopItem(countObj) {
+            return Object.entries(countObj).sort((a, b) => b[1] - a[1])[0]?.[0] || '-';
+        }
+
+        // Fetch reports every 5 minutes
+        fetchRecentReports();
+        setInterval(fetchRecentReports, 300000);
+    </script>
+</body>
+</html>'; // Replace with your actual API key
+        let totalReports = 0;
+        let countryCount = {};
+        let categoryCount = {};
+
+        async function fetchRecentReports() {
+            const url = 'https://api.abuseipdb.com/api/v2/reports?page=1&perPage=100';
+            
+            try {
+                const response = await fetch(url, {
+                    headers: {
+                        'Key': API_KEY,
+                        'Accept': 'application/json'
+                    }
+                });
+                const data = await response.json();
+                
+                data.data.forEach(report => {
+                    addReport(report);
+                });
+
+                updateStats();
+            } catch (error) {
+                console.error('Error fetching data:', error);
+            }
+        }
+
+        function addReport(report) {
+            const lat = report.latitude;
+            const lon = report.longitude;
+            const country = report.countryCode;
+            const category = report.categories[0]; // Using the first category for simplicity
+
+            L.circle([lat, lon], {
+                color: 'red',
+                fillColor: '#f03',
+                fillOpacity: 0.5,
+                radius: 50000
+            }).addTo(map).bindPopup(`
+                IP: ${report.ipAddress}<br>
+                Country: ${country}<br>
+                Category: ${category}<br>
+                Reported At: ${report.reportedAt}
+            `);
+
+            totalReports++;
+            countryCount[country] = (countryCount[country] || 0) + 1;
+            categoryCount[category] = (categoryCount[category] || 0) + 1;
+        }
+
+        function updateStats() {
+            document.getElementById('totalReports').textContent = totalReports;
+            document.getElementById('topAttackerCountry').textContent = getTopItem(countryCount);
+            document.getElementById('topCategory').textContent = getTopItem(categoryCount);
+        }
+
+        function getTopItem(countObj) {
+            return Object.entries(countObj).sort((a, b) => b[1] - a[1])[0]?.[0] || '-';
+        }
+
+        // Fetch reports every 5 minutes
+        fetchRecentReports();
+        setInterval(fetchRecentReports, 300000);
+    </script>
 </body>
 </html>

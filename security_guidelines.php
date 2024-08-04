@@ -18,7 +18,7 @@ $sample_data = [
     ['MITRE', 'Implement network segmentation and isolation']
 ];
 
-$insert = $db->prepare('INSERT INTO guidelines (framework, guideline) VALUES (:framework, :guideline)');
+$insert = $db->prepare('INSERT OR IGNORE INTO guidelines (framework, guideline) VALUES (:framework, :guideline)');
 foreach ($sample_data as $data) {
     $insert->bindValue(':framework', $data[0], SQLITE3_TEXT);
     $insert->bindValue(':guideline', $data[1], SQLITE3_TEXT);

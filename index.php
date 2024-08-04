@@ -1,32 +1,34 @@
 <?php
 declare(strict_types=1);
 
-$db = new SQLite3('security_guidelines.db');
+session_start();
+$upload_dir = "uploads/";
 
-// Create table if not exists
-$db->exec('CREATE TABLE IF NOT EXISTS guidelines (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    framework TEXT,
-    guideline TEXT
-)');
-
-// Sample data insertion (you would typically do this once, not on every page load)
-$sample_data = [
-    ['ITIL', 'Implement a robust incident management process'],
-    ['CIS', 'Inventory and Control of Hardware Assets'],
-    ['OWASP', 'Implement strong authentication and session management'],
-    ['MITRE', 'Implement network segmentation and isolation']
-];
-
-$insert = $db->prepare('INSERT INTO guidelines (framework, guideline) VALUES (:framework, :guideline)');
-foreach ($sample_data as $data) {
-    $insert->bindValue(':framework', $data[0], SQLITE3_TEXT);
-    $insert->bindValue(':guideline', $data[1], SQLITE3_TEXT);
-    $insert->execute();
+// Handle file upload
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_FILES["fileToUpload"])) {
+    $target_file = $upload_dir . basename($_FILES["fileToUpload"]["name"]);
+    if (move_uploaded_file($_FILES["fileToUpload"]["tmp_name"], $target_file)) {
+        $message = "File uploaded successfully.";
+    } else {
+        $message = "Sorry, there was an error uploading your file.";
+    }
 }
 
-// Fetch guidelines
-$results = $db->query('SELECT * FROM guidelines');
+// Handle file deletion
+if (isset($_GET['delete'])) {
+    $file = $upload_dir . $_GET['delete'];
+    if (file_exists($file) && unlink($file)) {
+        $message = "File deleted successfully.";
+    } else {
+        $message = "Error deleting file.";
+    }
+}
+
+function getFileList(string $dir): array {
+    $files = scandir($dir) ?: [];
+    return array_filter($files, fn($file) => $file !== '.' && $file !== '..');
+}
+
 ?>
 
 <!DOCTYPE html>
@@ -34,7 +36,7 @@ $results = $db->query('SELECT * FROM guidelines');
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cybersecurity Guidelines - Matthew's Azure Upload</title>
+    <title>Matthew's Azure Upload</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -70,25 +72,69 @@ $results = $db->query('SELECT * FROM guidelines');
             height: 30px;
             margin-right: 10px;
         }
-        .guidelines-section {
+        .message {
+            background-color: #e6f3ff;
+            border: 1px solid #b3d9ff;
+            border-radius: 3px;
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+        .upload-section {
             background-color: white;
             border-radius: 4px;
             padding: 20px;
-            margin-top: 20px;
+            margin-bottom: 20px;
             box-shadow: 0 1px 2px rgba(0,0,0,0.1);
         }
-        table {
-            width: 100%;
-            border-collapse: collapse;
+        .file-list {
+            list-style-type: none;
+            padding: 0;
+            background-color: white;
+            border-radius: 4px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
         }
-        th, td {
+        .file-list li {
+            padding: 15px 20px;
+            border-bottom: 1px solid #f3f2f1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .file-list li:last-child {
+            border-bottom: none;
+        }
+        .file-list li:hover {
+            background-color: #f9f9f9;
+        }
+        .file-actions a {
+            text-decoration: none;
+            color: #0078d4;
+            margin-left: 15px;
+        }
+        .file-actions a:hover {
+            text-decoration: underline;
+        }
+        form {
+            display: flex;
+            align-items: center;
+        }
+        input[type="file"] {
+            flex-grow: 1;
             padding: 10px;
-            border-bottom: 1px solid #ddd;
-            text-align: left;
+            border: 1px solid #ddd;
+            border-radius: 4px;
         }
-        th {
-            background-color: #f3f2f1;
-            font-weight: bold;
+        input[type="submit"] {
+            background-color: #0078d4;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        input[type="submit"]:hover {
+            background-color: #005a9e;
         }
         .nav-link {
             color: white;
@@ -111,23 +157,32 @@ $results = $db->query('SELECT * FROM guidelines');
         </div>
     </header>
     <div class="container">
-        <div class="guidelines-section">
-            <h2>Cybersecurity Guidelines</h2>
-            <table>
-                <tr>
-                    <th>Framework</th>
-                    <th>Guideline</th>
-                </tr>
-                <?php
-                while ($row = $results->fetchArray()) {
-                    echo "<tr>";
-                    echo "<td>" . htmlspecialchars($row['framework']) . "</td>";
-                    echo "<td>" . htmlspecialchars($row['guideline']) . "</td>";
-                    echo "</tr>";
-                }
-                ?>
-            </table>
+        <?php if (isset($message)) echo "<div class='message'>" . htmlspecialchars($message) . "</div>"; ?>
+
+        <div class="upload-section">
+            <h2>Upload File</h2>
+            <form action="" method="post" enctype="multipart/form-data">
+                <input type="file" name="fileToUpload" id="fileToUpload">
+                <input type="submit" value="Upload" name="submit">
+            </form>
         </div>
+
+        <h2>Files</h2>
+        <ul class="file-list">
+        <?php
+        $files = getFileList($upload_dir);
+        foreach ($files as $file) {
+            echo "<li>",
+                 "<span>", htmlspecialchars($file), "</span>",
+                 "<div class='file-actions'>",
+                 "<a href='", htmlspecialchars($upload_dir . $file), "' download>Download</a>",
+                 "<a href='?delete=", htmlspecialchars($file), "'>Delete</a>",
+                 "<a href='edit.php?file=", htmlspecialchars($file), "'>Edit</a>",
+                 "</div>",
+                 "</li>";
+        }
+        ?>
+        </ul>
     </div>
 </body>
 </html>

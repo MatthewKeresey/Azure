@@ -7,8 +7,7 @@ $db = new SQLite3('security_guidelines.db');
 $db->exec('CREATE TABLE IF NOT EXISTS guidelines (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     framework TEXT,
-    definition TEXT,
-    link TEXT
+    guideline TEXT
 )');
 
 // Sample data insertion (you would typically do this once, not on every page load)
@@ -25,13 +24,10 @@ $sample_data = [
     ['PCI DSS (Payment Card Industry Data Security Standard)', 'A set of security standards designed to ensure that all companies that accept, process, store, or transmit credit card information maintain a secure environment.', 'https://www.pcisecuritystandards.org/pci_security/']
 ];
 
-// Clear existing data and insert new data
-$db->exec('DELETE FROM guidelines');
-$insert = $db->prepare('INSERT INTO guidelines (framework, definition, link) VALUES (:framework, :definition, :link)');
+$insert = $db->prepare('INSERT OR IGNORE INTO guidelines (framework, guideline) VALUES (:framework, :guideline)');
 foreach ($sample_data as $data) {
     $insert->bindValue(':framework', $data[0], SQLITE3_TEXT);
-    $insert->bindValue(':definition', $data[1], SQLITE3_TEXT);
-    $insert->bindValue(':link', $data[2], SQLITE3_TEXT);
+    $insert->bindValue(':guideline', $data[1], SQLITE3_TEXT);
     $insert->execute();
 }
 
@@ -126,15 +122,13 @@ $results = $db->query('SELECT * FROM guidelines');
             <table>
                 <tr>
                     <th>Framework</th>
-                    <th>Definition</th>
-                    <th>Link</th>
+                    <th>Guideline</th>
                 </tr>
                 <?php
                 while ($row = $results->fetchArray()) {
                     echo "<tr>";
                     echo "<td>" . htmlspecialchars($row['framework']) . "</td>";
-                    echo "<td>" . htmlspecialchars($row['definition']) . "</td>";
-                    echo "<td><a href='" . htmlspecialchars($row['link']) . "' target='_blank'>Learn More</a></td>";
+                    echo "<td>" . htmlspecialchars($row['guideline']) . "</td>";
                     echo "</tr>";
                 }
                 ?>

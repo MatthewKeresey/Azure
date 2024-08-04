@@ -33,41 +33,57 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             line-height: 1.6;
             color: #333;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            background-color: #f3f2f1;
         }
         .container {
-            background-color: #fff;
-            border-radius: 5px;
+            max-width: 1200px;
+            margin: 0 auto;
             padding: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        header {
+            background-color: #0078d4;
+            color: white;
+            padding: 10px 0;
+        }
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
         }
         h1 {
-            color: #0078D4;
-            text-align: center;
-            margin-bottom: 20px;
+            margin: 0;
+            font-size: 24px;
         }
         .logo {
-            display: block;
-            margin: 0 auto 20px;
-            max-width: 200px;
+            height: 30px;
+            margin-right: 10px;
+        }
+        .edit-section {
+            background-color: white;
+            border-radius: 4px;
+            padding: 20px;
+            margin-top: 20px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
         }
         textarea {
             width: 100%;
             height: 400px;
             margin-bottom: 10px;
             border: 1px solid #ddd;
-            border-radius: 3px;
+            border-radius: 4px;
             padding: 10px;
         }
         input[type="submit"] {
-            background-color: #0078D4;
+            background-color: #0078d4;
             color: white;
             border: none;
             padding: 10px 20px;
-            border-radius: 3px;
+            border-radius: 4px;
             cursor: pointer;
         }
         input[type="submit"]:hover {
@@ -76,7 +92,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         .back-link {
             display: inline-block;
             margin-top: 20px;
-            color: #0078D4;
+            color: #0078d4;
             text-decoration: none;
         }
         .back-link:hover {
@@ -85,15 +101,21 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     </style>
 </head>
 <body>
+    <header>
+        <div class="header-content">
+            <h1><img src="logo.png" alt="Logo" class="logo">Matthew's Azure Upload</h1>
+        </div>
+    </header>
     <div class="container">
-        <img src="logo.png" alt="Matthew's Azure Upload" class="logo">
-        <h1>Edit File: <?= htmlspecialchars($file) ?></h1>
-        <?php if (isset($error)) echo "<p>" . htmlspecialchars($error) . "</p>"; ?>
-        <form action="" method="post">
-            <textarea name="content"><?= htmlspecialchars($content) ?></textarea>
-            <br>
-            <input type="submit" value="Save Changes">
-        </form>
+        <div class="edit-section">
+            <h2>Edit File: <?= htmlspecialchars($file) ?></h2>
+            <?php if (isset($error)) echo "<p>" . htmlspecialchars($error) . "</p>"; ?>
+            <form action="" method="post">
+                <textarea name="content"><?= htmlspecialchars($content) ?></textarea>
+                <br>
+                <input type="submit" value="Save Changes">
+            </form>
+        </div>
         <a href="index.php" class="back-link">Back to File List</a>
     </div>
 </body>

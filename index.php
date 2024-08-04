@@ -42,26 +42,35 @@ function getFileList(string $dir): array {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             line-height: 1.6;
             color: #333;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            background-color: #f3f2f1;
         }
         .container {
-            background-color: #fff;
-            border-radius: 5px;
+            max-width: 1200px;
+            margin: 0 auto;
             padding: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        header {
+            background-color: #0078d4;
+            color: white;
+            padding: 10px 0;
+        }
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
         }
         h1 {
-            color: #0078D4;
-            text-align: center;
-            margin-bottom: 20px;
+            margin: 0;
+            font-size: 24px;
         }
         .logo {
-            display: block;
-            margin: 0 auto 20px;
-            max-width: 200px;
+            height: 30px;
+            margin-right: 10px;
         }
         .message {
             background-color: #e6f3ff;
@@ -70,44 +79,59 @@ function getFileList(string $dir): array {
             padding: 10px;
             margin-bottom: 20px;
         }
+        .upload-section {
+            background-color: white;
+            border-radius: 4px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
         .file-list {
             list-style-type: none;
             padding: 0;
+            background-color: white;
+            border-radius: 4px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
         }
         .file-list li {
-            background-color: #f9f9f9;
-            margin-bottom: 10px;
-            padding: 10px;
-            border-radius: 3px;
+            padding: 15px 20px;
+            border-bottom: 1px solid #f3f2f1;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
+        .file-list li:last-child {
+            border-bottom: none;
+        }
         .file-list li:hover {
-            background-color: #f0f0f0;
+            background-color: #f9f9f9;
         }
         .file-actions a {
             text-decoration: none;
-            color: #0078D4;
-            margin-left: 10px;
+            color: #0078d4;
+            margin-left: 15px;
         }
         .file-actions a:hover {
             text-decoration: underline;
         }
         form {
-            margin-top: 20px;
+            display: flex;
+            align-items: center;
         }
         input[type="file"] {
-            display: block;
-            margin-bottom: 10px;
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
         }
         input[type="submit"] {
-            background-color: #0078D4;
+            background-color: #0078d4;
             color: white;
             border: none;
             padding: 10px 20px;
-            border-radius: 3px;
+            border-radius: 4px;
             cursor: pointer;
+            margin-left: 10px;
         }
         input[type="submit"]:hover {
             background-color: #005a9e;
@@ -115,19 +139,23 @@ function getFileList(string $dir): array {
     </style>
 </head>
 <body>
+    <header>
+        <div class="header-content">
+            <h1><img src="logo.png" alt="Logo" class="logo">Matthew's Azure Upload</h1>
+        </div>
+    </header>
     <div class="container">
-        <img src="logo.png" alt="Matthew's Azure Upload" class="logo">
-        <h1>Matthew's Azure Upload</h1>
-        
         <?php if (isset($message)) echo "<div class='message'>" . htmlspecialchars($message) . "</div>"; ?>
 
-        <h2>Upload File</h2>
-        <form action="" method="post" enctype="multipart/form-data">
-            <input type="file" name="fileToUpload" id="fileToUpload">
-            <input type="submit" value="Upload File" name="submit">
-        </form>
+        <div class="upload-section">
+            <h2>Upload File</h2>
+            <form action="" method="post" enctype="multipart/form-data">
+                <input type="file" name="fileToUpload" id="fileToUpload">
+                <input type="submit" value="Upload" name="submit">
+            </form>
+        </div>
 
-        <h2>File List</h2>
+        <h2>Files</h2>
         <ul class="file-list">
         <?php
         $files = getFileList($upload_dir);

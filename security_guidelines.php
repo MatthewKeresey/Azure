@@ -7,21 +7,31 @@ $db = new SQLite3('security_guidelines.db');
 $db->exec('CREATE TABLE IF NOT EXISTS guidelines (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     framework TEXT,
-    guideline TEXT
+    definition TEXT,
+    link TEXT
 )');
 
 // Sample data insertion (you would typically do this once, not on every page load)
 $sample_data = [
-    ['ITIL', 'Implement a robust incident management process'],
-    ['CIS', 'Inventory and Control of Hardware Assets'],
-    ['OWASP', 'Implement strong authentication and session management'],
-    ['MITRE', 'Implement network segmentation and isolation']
+    ['CIS (Center for Internet Security)', 'Provides a set of best practices and standards to secure systems and data against cyber threats.', 'https://www.cisecurity.org/controls/'],
+    ['ITIL (Information Technology Infrastructure Library)', 'A framework for IT service management that aims to align IT services with the needs of the business.', 'https://www.axelos.com/best-practice-solutions/itil'],
+    ['OWASP (Open Web Application Security Project)', 'An online community that produces freely available articles, methodologies, documentation, tools, and technologies in the field of web application security.', 'https://owasp.org/'],
+    ['MITRE ATT&CK', 'A globally-accessible knowledge base of adversary tactics and techniques based on real-world observations.', 'https://attack.mitre.org/'],
+    ['NIST (National Institute of Standards and Technology)', 'Develops and promotes cybersecurity standards, guidelines, and best practices to help organizations manage and reduce their cybersecurity risk.', 'https://www.nist.gov/cyberframework'],
+    ['ISO/IEC 27001', 'Specifies the requirements for establishing, implementing, maintaining, and continually improving an information security management system (ISMS).', 'https://www.iso.org/isoiec-27001-information-security.html'],
+    ['COBIT (Control Objectives for Information and Related Technologies)', 'A framework for developing, implementing, monitoring, and improving IT governance and management practices.', 'https://www.isaca.org/resources/cobit'],
+    ['GDPR (General Data Protection Regulation)', 'A legal framework that sets guidelines for the collection and processing of personal information from individuals who live in the European Union (EU).', 'https://gdpr.eu/'],
+    ['HIPAA (Health Insurance Portability and Accountability Act)', 'A US law designed to provide privacy standards to protect patients\' medical records and other health information.', 'https://www.hhs.gov/hipaa/index.html'],
+    ['PCI DSS (Payment Card Industry Data Security Standard)', 'A set of security standards designed to ensure that all companies that accept, process, store, or transmit credit card information maintain a secure environment.', 'https://www.pcisecuritystandards.org/pci_security/']
 ];
 
-$insert = $db->prepare('INSERT OR IGNORE INTO guidelines (framework, guideline) VALUES (:framework, :guideline)');
+// Clear existing data and insert new data
+$db->exec('DELETE FROM guidelines');
+$insert = $db->prepare('INSERT INTO guidelines (framework, definition, link) VALUES (:framework, :definition, :link)');
 foreach ($sample_data as $data) {
     $insert->bindValue(':framework', $data[0], SQLITE3_TEXT);
-    $insert->bindValue(':guideline', $data[1], SQLITE3_TEXT);
+    $insert->bindValue(':definition', $data[1], SQLITE3_TEXT);
+    $insert->bindValue(':link', $data[2], SQLITE3_TEXT);
     $insert->execute();
 }
 
@@ -116,13 +126,15 @@ $results = $db->query('SELECT * FROM guidelines');
             <table>
                 <tr>
                     <th>Framework</th>
-                    <th>Guideline</th>
+                    <th>Definition</th>
+                    <th>Link</th>
                 </tr>
                 <?php
                 while ($row = $results->fetchArray()) {
                     echo "<tr>";
                     echo "<td>" . htmlspecialchars($row['framework']) . "</td>";
-                    echo "<td>" . htmlspecialchars($row['guideline']) . "</td>";
+                    echo "<td>" . htmlspecialchars($row['definition']) . "</td>";
+                    echo "<td><a href='" . htmlspecialchars($row['link']) . "' target='_blank'>Learn More</a></td>";
                     echo "</tr>";
                 }
                 ?>

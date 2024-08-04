@@ -24,17 +24,6 @@ if (isset($_GET['delete'])) {
     }
 }
 
-// Handle file edit (this is a simple text edit functionality)
-if (isset($_POST['edit'])) {
-    $file = $upload_dir . $_POST['filename'];
-    $content = $_POST['content'];
-    if (file_put_contents($file, $content) !== false) {
-        $message = "File edited successfully.";
-    } else {
-        $message = "Error editing file.";
-    }
-}
-
 function getFileList(string $dir): array {
     $files = scandir($dir) ?: [];
     return array_filter($files, fn($file) => $file !== '.' && $file !== '..');
@@ -47,47 +36,113 @@ function getFileList(string $dir): array {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple File Server</title>
+    <title>Matthew's Azure Upload</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
             max-width: 800px;
             margin: 0 auto;
             padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            background-color: #fff;
+            border-radius: 5px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #0078D4;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .logo {
+            display: block;
+            margin: 0 auto 20px;
+            max-width: 200px;
+        }
+        .message {
+            background-color: #e6f3ff;
+            border: 1px solid #b3d9ff;
+            border-radius: 3px;
+            padding: 10px;
+            margin-bottom: 20px;
         }
         .file-list {
             list-style-type: none;
             padding: 0;
         }
         .file-list li {
+            background-color: #f9f9f9;
             margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 3px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .file-list li:hover {
+            background-color: #f0f0f0;
+        }
+        .file-actions a {
+            text-decoration: none;
+            color: #0078D4;
+            margin-left: 10px;
+        }
+        .file-actions a:hover {
+            text-decoration: underline;
+        }
+        form {
+            margin-top: 20px;
+        }
+        input[type="file"] {
+            display: block;
+            margin-bottom: 10px;
+        }
+        input[type="submit"] {
+            background-color: #0078D4;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        input[type="submit"]:hover {
+            background-color: #005a9e;
         }
     </style>
 </head>
 <body>
-    <h1>Simple File Server</h1>
-    
-    <?php if (isset($message)) echo "<p>" . htmlspecialchars($message) . "</p>"; ?>
+    <div class="container">
+        <img src="logo.png" alt="Matthew's Azure Upload" class="logo">
+        <h1>Matthew's Azure Upload</h1>
+        
+        <?php if (isset($message)) echo "<div class='message'>" . htmlspecialchars($message) . "</div>"; ?>
 
-    <h2>Upload File</h2>
-    <form action="" method="post" enctype="multipart/form-data">
-        <input type="file" name="fileToUpload" id="fileToUpload">
-        <input type="submit" value="Upload File" name="submit">
-    </form>
+        <h2>Upload File</h2>
+        <form action="" method="post" enctype="multipart/form-data">
+            <input type="file" name="fileToUpload" id="fileToUpload">
+            <input type="submit" value="Upload File" name="submit">
+        </form>
 
-    <h2>File List</h2>
-    <ul class="file-list">
-    <?php
-    $files = getFileList($upload_dir);
-    foreach ($files as $file) {
-        echo "<li>",
-             htmlspecialchars($file), 
-             " <a href='", htmlspecialchars($upload_dir . $file), "' download>Download</a>",
-             " <a href='?delete=", htmlspecialchars($file), "'>Delete</a>",
-             " <a href='edit.php?file=", htmlspecialchars($file), "'>Edit</a>",
-             "</li>";
-    }
-    ?>
-    </ul>
+        <h2>File List</h2>
+        <ul class="file-list">
+        <?php
+        $files = getFileList($upload_dir);
+        foreach ($files as $file) {
+            echo "<li>",
+                 "<span>", htmlspecialchars($file), "</span>",
+                 "<div class='file-actions'>",
+                 "<a href='", htmlspecialchars($upload_dir . $file), "' download>Download</a>",
+                 "<a href='?delete=", htmlspecialchars($file), "'>Delete</a>",
+                 "<a href='edit.php?file=", htmlspecialchars($file), "'>Edit</a>",
+                 "</div>",
+                 "</li>";
+        }
+        ?>
+        </ul>
+    </div>
 </body>
 </html>
